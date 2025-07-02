@@ -116,11 +116,18 @@ public partial class Form1 : Form
     {
         if (!string.IsNullOrWhiteSpace(textBox1.Text))
         {
-            dataGridView1.Rows.Clear();
-            results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reiniciar resultados
+            if (System.Net.IPAddress.TryParse(textBox1.Text, out System.Net.IPAddress ipAddress) &&
+                ipAddress.AddressFamily == AddressFamily.InterNetwork)
+            {
+                dataGridView1.Rows.Clear();
+                results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reiniciar resultados
 
-            await PingNetworkAsync(textBox1.Text.Substring(0, textBox1.Text.LastIndexOf('.') + 1));
+                string baseIp = textBox1.Text.Substring(0, textBox1.Text.LastIndexOf('.') + 1);
+                await PingNetworkAsync(baseIp);
+                return;
+            }
         }
+        MessageBox.Show("Please enter a valid IPv4 address.");
     }
 
     private async Task PingNetworkAsync(string baseIp)
@@ -154,7 +161,7 @@ public partial class Form1 : Form
     {
         try
         {
-            using var ping = new Ping();
+            Ping ping = new Ping();
             PingReply pingReply = ping.Send(ipString, 3000); // Timeout aumentado a 3000 ms (3 segundos)
 
             if (pingReply.Status == IPStatus.Success)
