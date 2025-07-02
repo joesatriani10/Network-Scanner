@@ -5,6 +5,8 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Network_Scanner;
 
@@ -179,60 +181,59 @@ public partial class Form1 : Form
 
     private async Task PingNetworkAsync(string baseIp, CancellationToken token)
     {
-        var tasks = new List<Task>();
+        var ipList = Enumerable.Range(1, 254)
+            .Select(i => $"{baseIp}{i}")
+            .ToList();
 
-        for (int i = 1; i <= 254; i++)
+        var options = new ParallelOptions
         {
-            if (token.IsCancellationRequested)
-                break;
+            CancellationToken = token,
+            MaxDegreeOfParallelism = Environment.ProcessorCount
+        };
 
-            string ipString = baseIp + i.ToString();
-            tasks.Add(Task.Run(() => PingAddress(ipString, token)));
-        }
-
-        await Task.WhenAll(tasks);
+        await Parallel.ForEachAsync(ipList, options, async (ip, ct) =>
+        {
+            await PingAddressAsync(ip, ct);
+        });
     }
 
-    private void PingAddress(string ipString, CancellationToken token)
+    private async Task PingAddressAsync(string ipString, CancellationToken token)
     {
         if (token.IsCancellationRequested)
             return;
         try
         {
             using var ping = new Ping();
-            PingReply pingReply = ping.Send(ipString, 3000); // Timeout increased to 3000 ms (3 seconds)
+            PingReply pingReply = await ping.SendPingAsync(ipString, 3000);
 
             if (pingReply.Status == IPStatus.Success)
             {
-                if (System.Net.IPAddress.TryParse(ipString, out var ipAddress))
+                string name = "Unknown";
+                try
                 {
-                    string name = "Unknown";
-                    try
-                    {
-                        var host = Dns.GetHostEntry(ipAddress);
-                        name = host.HostName;
-                    }
-                    catch
-                    {
-                        // Ignore error in case cant resolve host
-                    }
-
-                    var entry = (IpAddress: ipString,
-                                  HostName: name,
-                                  PingReply: ipAddress.ToString(),
-                                  Status: pingReply.Status,
-                                  RoundtripTime: pingReply.RoundtripTime);
-                    results.Add(entry);
-                    this.Invoke((Action)(() =>
-                    {
-                        int rowIndex = dataGridView1.Rows.Add();
-                        dataGridView1.Rows[rowIndex].Cells[0].Value = entry.IpAddress;
-                        dataGridView1.Rows[rowIndex].Cells[1].Value = entry.HostName;
-                        dataGridView1.Rows[rowIndex].Cells[2].Value = entry.PingReply;
-                        dataGridView1.Rows[rowIndex].Cells[3].Value = entry.Status.ToString();
-                        dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
-                    }));
+                    var host = await Dns.GetHostEntryAsync(ipString);
+                    name = host.HostName;
                 }
+                catch
+                {
+                    // Ignore error in case cant resolve host
+                }
+
+                var entry = (IpAddress: ipString,
+                              HostName: name,
+                              PingReply: pingReply.Address?.ToString() ?? ipString,
+                              Status: pingReply.Status,
+                              RoundtripTime: pingReply.RoundtripTime);
+                results.Add(entry);
+                this.Invoke((Action)(() =>
+                {
+                    int rowIndex = dataGridView1.Rows.Add();
+                    dataGridView1.Rows[rowIndex].Cells[0].Value = entry.IpAddress;
+                    dataGridView1.Rows[rowIndex].Cells[1].Value = entry.HostName;
+                    dataGridView1.Rows[rowIndex].Cells[2].Value = entry.PingReply;
+                    dataGridView1.Rows[rowIndex].Cells[3].Value = entry.Status.ToString();
+                    dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
+                }));
             }
         }
         catch
