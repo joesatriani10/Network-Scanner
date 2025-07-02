@@ -39,6 +39,7 @@ partial class Form1
         RoundtripTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
         button1 = new System.Windows.Forms.Button();
         comboBox1 = new System.Windows.Forms.ComboBox();
+        progressBar1 = new System.Windows.Forms.ProgressBar();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         SuspendLayout();
         // 
@@ -95,18 +96,29 @@ partial class Form1
         button1.Click += button1_Click;
         // 
         // comboBox1
-        // 
+        //
         comboBox1.FormattingEnabled = true;
         comboBox1.Location = new System.Drawing.Point(6, 8);
         comboBox1.Name = "comboBox1";
         comboBox1.Size = new System.Drawing.Size(142, 23);
         comboBox1.TabIndex = 3;
-        // 
+        //
+        // progressBar1
+        //
+        progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+        progressBar1.Location = new System.Drawing.Point(6, 419);
+        progressBar1.Name = "progressBar1";
+        progressBar1.Size = new System.Drawing.Size(701, 23);
+        progressBar1.TabIndex = 4;
+        progressBar1.Visible = false;
+        //
         // Form1
-        // 
+        //
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
         ClientSize = new System.Drawing.Size(800, 450);
+        Controls.Add(progressBar1);
         Controls.Add(comboBox1);
         Controls.Add(button1);
         Controls.Add(dataGridView1);
@@ -130,6 +142,8 @@ partial class Form1
     private System.Windows.Forms.DataGridView dataGridView1;
 
     private System.Windows.Forms.TextBox textBox1;
+
+    private System.Windows.Forms.ProgressBar progressBar1;
 
     #endregion
 

@@ -4,12 +4,15 @@ using System.Net.NetworkInformation;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Network_Scanner;
 
 public partial class Form1 : Form
 {
     private ConcurrentBag<(string IpAddress, string HostName, string PingReply, IPStatus Status, long RoundtripTime)> results;
+    private CancellationTokenSource? _cts;
+    private int _completed;
 
     public Form1()
     {
@@ -135,23 +138,41 @@ public partial class Form1 : Form
             {
                 dataGridView1.Rows.Clear();
                 results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reiniciar resultados
+                _cts?.Cancel();
+                _cts = new CancellationTokenSource();
+                _completed = 0;
+                progressBar1.Value = 0;
+                progressBar1.Maximum = 254;
+                progressBar1.Visible = true;
 
                 string baseIp = textBox1.Text.Substring(0, textBox1.Text.LastIndexOf('.') + 1);
-                await PingNetworkAsync(baseIp);
+                try
+                {
+                    await PingNetworkAsync(baseIp, _cts.Token);
+                }
+                finally
+                {
+                    progressBar1.Visible = false;
+                    _cts.Dispose();
+                    _cts = null;
+                }
                 return;
             }
         }
         MessageBox.Show("Please enter a valid IPv4 address.");
     }
 
-    private async Task PingNetworkAsync(string baseIp)
+    private async Task PingNetworkAsync(string baseIp, CancellationToken token)
     {
         var tasks = new List<Task>();
 
         for (int i = 1; i <= 254; i++)
         {
+            if (token.IsCancellationRequested)
+                break;
+
             string ipString = baseIp + i.ToString();
-            tasks.Add(Task.Run(() => PingAddress(ipString)));
+            tasks.Add(Task.Run(() => PingAddress(ipString, token)));
         }
 
         await Task.WhenAll(tasks);
@@ -171,8 +192,10 @@ public partial class Form1 : Form
         }));
     }
 
-    private void PingAddress(string ipString)
+    private void PingAddress(string ipString, CancellationToken token)
     {
+        if (token.IsCancellationRequested)
+            return;
         try
         {
             using var ping = new Ping();
@@ -200,6 +223,15 @@ public partial class Form1 : Form
         catch
         {
             // Ignorar errores de Ping
+        }
+        finally
+        {
+            int count = Interlocked.Increment(ref _completed);
+            this.Invoke((Action)(() =>
+            {
+                if (count <= progressBar1.Maximum)
+                    progressBar1.Value = count;
+            }));
         }
     }
 }
