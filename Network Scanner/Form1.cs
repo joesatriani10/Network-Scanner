@@ -4,12 +4,14 @@ using System.Net.NetworkInformation;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Network_Scanner;
 
 public partial class Form1 : Form
 {
     private ConcurrentBag<(string IpAddress, string HostName, string PingReply, IPStatus Status, long RoundtripTime)> results;
+    private CancellationTokenSource? _cts;
 
     public Form1()
     {
@@ -111,9 +113,15 @@ public partial class Form1 : Form
         return "";
     }
 
-    // Método para iniciar el escaneo de red
+    // Método para iniciar o cancelar el escaneo de red
     private async void button1_Click(object sender, EventArgs e)
     {
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(textBox1.Text))
         {
             if (System.Net.IPAddress.TryParse(textBox1.Text, out System.Net.IPAddress ipAddress) &&
@@ -123,21 +131,57 @@ public partial class Form1 : Form
                 results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reiniciar resultados
 
                 string baseIp = textBox1.Text.Substring(0, textBox1.Text.LastIndexOf('.') + 1);
-                await PingNetworkAsync(baseIp);
+
+                _cts = new CancellationTokenSource();
+                button1.Text = "Cancel";
+                textBox1.Enabled = false;
+                comboBox1.Enabled = false;
+                progressBar1.Value = 0;
+                progressBar1.Visible = true;
+
+                try
+                {
+                    await PingNetworkAsync(baseIp, _cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Escaneo cancelado
+                }
+                finally
+                {
+                    progressBar1.Visible = false;
+                    textBox1.Enabled = true;
+                    comboBox1.Enabled = true;
+                    button1.Text = "Start";
+                    _cts.Dispose();
+                    _cts = null;
+                }
                 return;
             }
         }
         MessageBox.Show("Please enter a valid IPv4 address.");
     }
 
-    private async Task PingNetworkAsync(string baseIp)
+    private async Task PingNetworkAsync(string baseIp, CancellationToken token)
     {
+        progressBar1.Invoke(() => progressBar1.Maximum = 254);
+
         var tasks = new List<Task>();
+        int completed = 0;
 
         for (int i = 1; i <= 254; i++)
         {
             string ipString = baseIp + i.ToString();
-            tasks.Add(Task.Run(() => PingAddress(ipString)));
+            tasks.Add(Task.Run(async () =>
+            {
+                await PingAddressAsync(ipString, token);
+                int value = Interlocked.Increment(ref completed);
+                progressBar1.Invoke(() =>
+                {
+                    if (value <= progressBar1.Maximum)
+                        progressBar1.Value = value;
+                });
+            }, token));
         }
 
         await Task.WhenAll(tasks);
@@ -157,12 +201,13 @@ public partial class Form1 : Form
         }));
     }
 
-    private void PingAddress(string ipString)
+    private async Task PingAddressAsync(string ipString, CancellationToken token)
     {
         try
         {
             Ping ping = new Ping();
-            PingReply pingReply = ping.Send(ipString, 3000); // Timeout aumentado a 3000 ms (3 segundos)
+            PingReply pingReply = await ping.SendPingAsync(ipString, 3000);
+            token.ThrowIfCancellationRequested();
 
             if (pingReply.Status == IPStatus.Success)
             {
@@ -171,7 +216,7 @@ public partial class Form1 : Form
                     string name = "Unknown";
                     try
                     {
-                        var host = Dns.GetHostEntry(ipAddress);
+                        var host = await Dns.GetHostEntryAsync(ipAddress);
                         name = host.HostName;
                     }
                     catch
@@ -182,6 +227,10 @@ public partial class Form1 : Form
                     results.Add((ipString, name, ipAddress.ToString(), pingReply.Status, pingReply.RoundtripTime));
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch
         {
