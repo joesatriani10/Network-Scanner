@@ -131,6 +131,12 @@ public partial class Form1 : Form
     // Método para iniciar el escaneo de red
     private async void button1_Click(object sender, EventArgs e)
     {
+        if (_cts != null)
+        {
+            CancelScan();
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(textBox1.Text))
         {
             if (System.Net.IPAddress.TryParse(textBox1.Text, out System.Net.IPAddress ipAddress) &&
@@ -138,12 +144,12 @@ public partial class Form1 : Form
             {
                 dataGridView1.Rows.Clear();
                 results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reiniciar resultados
-                _cts?.Cancel();
                 _cts = new CancellationTokenSource();
                 _completed = 0;
                 progressBar1.Value = 0;
                 progressBar1.Maximum = 254;
                 progressBar1.Visible = true;
+                button1.Text = "Cancel";
 
                 string baseIp = textBox1.Text.Substring(0, textBox1.Text.LastIndexOf('.') + 1);
                 try
@@ -155,11 +161,20 @@ public partial class Form1 : Form
                     progressBar1.Visible = false;
                     _cts.Dispose();
                     _cts = null;
+                    button1.Text = "Start";
                 }
                 return;
             }
         }
         MessageBox.Show("Please enter a valid IPv4 address.");
+    }
+    
+    private void CancelScan()
+    {
+        if (_cts != null && !_cts.IsCancellationRequested)
+        {
+            _cts.Cancel();
+        }
     }
 
     private async Task PingNetworkAsync(string baseIp, CancellationToken token)
@@ -213,7 +228,7 @@ public partial class Form1 : Form
                     }
                     catch
                     {
-                        // Ignorar errores si no se puede resolver el nombre del host
+                        // Ignore error in case cant resolve host
                     }
 
                     results.Add((ipString, name, ipAddress.ToString(), pingReply.Status, pingReply.RoundtripTime));

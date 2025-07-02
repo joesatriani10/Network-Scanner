@@ -32,4 +32,4 @@ You can also run the application directly with the .NET CLI:
  dotnet run --project "Network Scanner/Network Scanner.csproj"
 ```
 
-Select a network interface from the drop-down, verify the starting IP address, and click **Scan** to discover hosts on your network.
+Select a network interface from the drop-down, verify the starting IP address, and click **Scan** to discover hosts on your network. The **Scan** button changes to **Cancel** while scanning so you can stop the operation early.
