@@ -14,7 +14,7 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
-        
+
         // Inicializar la bolsa concurrente para almacenar los resultados
         results = new ConcurrentBag<(string, string, string, IPStatus, long)>();
 
@@ -23,6 +23,10 @@ public partial class Form1 : Form
 
         // Cargar interfaces de red disponibles
         LoadNetworkInterfaces();
+
+        // Configurar la entrada de la TextBox para direcciones IPv4
+        textBox1.KeyPress += textBox1_KeyPress;
+        textBox1.MaxLength = 15;
 
         // Vincular evento del ComboBox
         comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
@@ -81,6 +85,15 @@ public partial class Form1 : Form
             string selectedInterface = comboBox1.SelectedItem.ToString();
             string ipBase = GetLocalNetworkBase(selectedInterface);
             textBox1.Text = ipBase; // Mostrar la IP base terminada en .1
+        }
+    }
+
+    private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
+    {
+        // Permitir dígitos, el punto y las teclas de control (como Backspace)
+        if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && e.KeyChar != '.')
+        {
+            e.Handled = true;
         }
     }
 
