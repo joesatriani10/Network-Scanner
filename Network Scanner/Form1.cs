@@ -31,6 +31,7 @@ public partial class Form1 : Form
     private void InitializeDataGridView()
     {
         dataGridView1.Columns.Clear();
+        dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dataGridView1.Columns.Add("IPAddress", "IP Address");
         dataGridView1.Columns.Add("HostName", "Host Name");
         dataGridView1.Columns.Add("PingReply", "Ping Reply");
