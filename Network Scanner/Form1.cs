@@ -18,20 +18,20 @@ public partial class Form1 : Form
     {
         InitializeComponent();
 
-        // Inicializar la bolsa concurrente para almacenar los resultados
+        // Initialize the concurrent bag to store results
         results = new ConcurrentBag<(string, string, string, IPStatus, long)>();
 
-        // Inicializar columnas del DataGridView
+        // Initialize DataGridView columns
         InitializeDataGridView();
 
-        // Cargar interfaces de red disponibles
+        // Load available network interfaces
         LoadNetworkInterfaces();
 
-        // Configurar la entrada de la TextBox para direcciones IPv4
+        // Configure TextBox input for IPv4 addresses
         textBox1.KeyPress += textBox1_KeyPress;
         textBox1.MaxLength = 15;
 
-        // Vincular evento del ComboBox
+        // Attach ComboBox selection event
         comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
     }
 
@@ -50,7 +50,7 @@ public partial class Form1 : Form
     {
         comboBox1.Items.Clear();
 
-        // Expresión regular para nombres válidos (Ethernet, Ethernet 2, Wi-Fi, Wi-Fi 2, WiFi, WiFi 2, etc.)
+        // Regular expression for valid interface names (Ethernet, Ethernet 2, Wi-Fi, Wi-Fi 2, WiFi, WiFi 2, etc.)
         var validPattern = new Regex(@"^(Ethernet|Wi-Fi|WiFi)( \d+)?$", RegexOptions.IgnoreCase);
 
         foreach (var netInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -88,13 +88,13 @@ public partial class Form1 : Form
         {
             string selectedInterface = comboBox1.SelectedItem.ToString();
             string ipBase = GetLocalNetworkBase(selectedInterface);
-            textBox1.Text = ipBase; // Mostrar la IP base terminada en .1
+            textBox1.Text = ipBase; // Display the base IP ending in .1
         }
     }
 
     private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
     {
-        // Permitir dígitos, el punto y las teclas de control (como Backspace)
+        // Allow digits, the period, and control keys (such as Backspace)
         if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && e.KeyChar != '.')
         {
             e.Handled = true;
@@ -128,7 +128,7 @@ public partial class Form1 : Form
         return "";
     }
 
-    // Método para iniciar el escaneo de red
+    // Method to start scanning the network
     private async void button1_Click(object sender, EventArgs e)
     {
         if (_cts != null)
@@ -143,7 +143,7 @@ public partial class Form1 : Form
                 ipAddress.AddressFamily == AddressFamily.InterNetwork)
             {
                 dataGridView1.Rows.Clear();
-                results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reiniciar resultados
+                results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reset stored results
                 _cts = new CancellationTokenSource();
                 _completed = 0;
                 progressBar1.Value = 0;
@@ -191,20 +191,6 @@ public partial class Form1 : Form
         }
 
         await Task.WhenAll(tasks);
-
-        // Actualizar la interfaz gráfica después de terminar el escaneo
-        this.Invoke((Action)(() =>
-        {
-            foreach (var result in results)
-            {
-                int rowIndex = dataGridView1.Rows.Add();
-                dataGridView1.Rows[rowIndex].Cells[0].Value = result.IpAddress;
-                dataGridView1.Rows[rowIndex].Cells[1].Value = result.HostName;
-                dataGridView1.Rows[rowIndex].Cells[2].Value = result.PingReply;
-                dataGridView1.Rows[rowIndex].Cells[3].Value = result.Status.ToString();
-                dataGridView1.Rows[rowIndex].Cells[4].Value = result.RoundtripTime;
-            }
-        }));
     }
 
     private void PingAddress(string ipString, CancellationToken token)
@@ -214,7 +200,7 @@ public partial class Form1 : Form
         try
         {
             using var ping = new Ping();
-            PingReply pingReply = ping.Send(ipString, 3000); // Timeout aumentado a 3000 ms (3 segundos)
+            PingReply pingReply = ping.Send(ipString, 3000); // Timeout increased to 3000 ms (3 seconds)
 
             if (pingReply.Status == IPStatus.Success)
             {
@@ -231,13 +217,27 @@ public partial class Form1 : Form
                         // Ignore error in case cant resolve host
                     }
 
-                    results.Add((ipString, name, ipAddress.ToString(), pingReply.Status, pingReply.RoundtripTime));
+                    var entry = (IpAddress: ipString,
+                                  HostName: name,
+                                  PingReply: ipAddress.ToString(),
+                                  Status: pingReply.Status,
+                                  RoundtripTime: pingReply.RoundtripTime);
+                    results.Add(entry);
+                    this.Invoke((Action)(() =>
+                    {
+                        int rowIndex = dataGridView1.Rows.Add();
+                        dataGridView1.Rows[rowIndex].Cells[0].Value = entry.IpAddress;
+                        dataGridView1.Rows[rowIndex].Cells[1].Value = entry.HostName;
+                        dataGridView1.Rows[rowIndex].Cells[2].Value = entry.PingReply;
+                        dataGridView1.Rows[rowIndex].Cells[3].Value = entry.Status.ToString();
+                        dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
+                    }));
                 }
             }
         }
         catch
         {
-            // Ignorar errores de Ping
+            // Ignore Ping exceptions
         }
         finally
         {
