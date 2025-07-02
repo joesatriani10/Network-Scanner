@@ -161,7 +161,7 @@ public partial class Form1 : Form
     {
         try
         {
-            Ping ping = new Ping();
+            using var ping = new Ping();
             PingReply pingReply = ping.Send(ipString, 3000); // Timeout aumentado a 3000 ms (3 segundos)
 
             if (pingReply.Status == IPStatus.Success)
