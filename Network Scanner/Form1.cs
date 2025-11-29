@@ -576,4 +576,14 @@ public partial class Form1 : Form
             SetStatus($"Copied {ip} to clipboard.");
         }
     }
+
+    private void labelStatus_Click(object sender, EventArgs e)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    private void labelStats_Click(object sender, EventArgs e)
+    {
+        throw new System.NotImplementedException();
+    }
 }
