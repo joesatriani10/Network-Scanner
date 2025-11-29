@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -41,11 +42,40 @@ public partial class Form1 : Form
 
         buttonExport.Enabled = false;
         labelStatus.Text = "Ready";
+        DoubleBuffered = true;
     }
 
     private void InitializeDataGridView()
     {
         dataGridView1.Columns.Clear();
+        dataGridView1.BorderStyle = BorderStyle.None;
+        dataGridView1.BackgroundColor = Color.White;
+        dataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+        dataGridView1.RowHeadersVisible = false;
+        dataGridView1.AllowUserToAddRows = false;
+        dataGridView1.AllowUserToResizeRows = false;
+        dataGridView1.EnableHeadersVisualStyles = false;
+        dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+
+        var headerStyle = new DataGridViewCellStyle
+        {
+            BackColor = Color.FromArgb(30, 80, 200),
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI Semibold", 9.75f, FontStyle.Bold, GraphicsUnit.Point),
+            Alignment = DataGridViewContentAlignment.MiddleLeft
+        };
+        dataGridView1.ColumnHeadersDefaultCellStyle = headerStyle;
+        dataGridView1.ColumnHeadersHeight = 32;
+
+        dataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(230, 240, 255);
+        dataGridView1.DefaultCellStyle.SelectionForeColor = Color.Black;
+        dataGridView1.GridColor = Color.FromArgb(220, 228, 235);
+
+        dataGridView1.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+        {
+            BackColor = Color.FromArgb(245, 247, 252)
+        };
+        dataGridView1.RowTemplate.Height = 28;
         dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dataGridView1.Columns.Add("IPAddress", "IP Address");
         dataGridView1.Columns.Add("HostName", "Host Name");
