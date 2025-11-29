@@ -1,8 +1,10 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Collections.Concurrent;
 using System.Net.Sockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +17,7 @@ public partial class Form1 : Form
     private ConcurrentBag<(string IpAddress, string HostName, string PingReply, IPStatus Status, long RoundtripTime)> results;
     private CancellationTokenSource? _cts;
     private int _completed;
+    private int _totalHosts;
 
     public Form1()
     {
@@ -35,6 +38,9 @@ public partial class Form1 : Form
 
         // Attach ComboBox selection event
         comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
+
+        buttonExport.Enabled = false;
+        labelStatus.Text = "Ready";
     }
 
     private void InitializeDataGridView()
@@ -103,6 +109,29 @@ public partial class Form1 : Form
         }
     }
 
+    private bool TryGetBaseAddress(string input, out string baseIp, out string errorMessage)
+    {
+        baseIp = "";
+        errorMessage = "";
+
+        if (!System.Net.IPAddress.TryParse(input, out System.Net.IPAddress ipAddress) ||
+            ipAddress.AddressFamily != AddressFamily.InterNetwork)
+        {
+            errorMessage = "Please enter a valid IPv4 address.";
+            return false;
+        }
+
+        var parts = input.Split('.');
+        if (parts.Length != 4)
+        {
+            errorMessage = "Please enter a valid IPv4 address.";
+            return false;
+        }
+
+        baseIp = $"{parts[0]}.{parts[1]}.{parts[2]}.";
+        return true;
+    }
+
     private string GetLocalNetworkBase(string selectedInterface)
     {
         foreach (var netInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -141,36 +170,105 @@ public partial class Form1 : Form
 
         if (!string.IsNullOrWhiteSpace(textBox1.Text))
         {
-            if (System.Net.IPAddress.TryParse(textBox1.Text, out System.Net.IPAddress ipAddress) &&
-                ipAddress.AddressFamily == AddressFamily.InterNetwork)
+            string ipAddressInput = textBox1.Text.Trim();
+            if (TryGetBaseAddress(ipAddressInput, out string baseIp, out string errorMessage))
             {
+                int start = (int)startRangeUpDown.Value;
+                int end = (int)endRangeUpDown.Value;
+                if (start > end)
+                {
+                    MessageBox.Show("The start host value must be less than or equal to the end value.");
+                    return;
+                }
+
                 dataGridView1.Rows.Clear();
                 results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reset stored results
                 _cts = new CancellationTokenSource();
                 _completed = 0;
+                _totalHosts = end - start + 1;
                 progressBar1.Value = 0;
-                progressBar1.Maximum = 254;
-                progressBar1.Visible = true;
-                button1.Text = "Cancel";
+                progressBar1.Maximum = _totalHosts;
+                SetScanningUiState(true);
+                SetStatus($"Scanning {baseIp}{start}-{end}...");
+                bool wasCancelled = false;
 
-                string baseIp = textBox1.Text.Substring(0, textBox1.Text.LastIndexOf('.') + 1);
+                bool resolveHosts = checkBoxResolveHosts.Checked;
+                int timeoutMs = (int)numericTimeout.Value;
+
                 try
                 {
-                    await PingNetworkAsync(baseIp, _cts.Token);
+                    await PingNetworkAsync(baseIp, start, end, resolveHosts, timeoutMs, _cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    wasCancelled = true;
                 }
                 finally
                 {
-                    progressBar1.Visible = false;
-                    _cts.Dispose();
+                    wasCancelled |= _cts?.IsCancellationRequested == true;
+                    _cts?.Dispose();
                     _cts = null;
-                    button1.Text = "Start";
+                    SetScanningUiState(false);
+                    SetStatus(wasCancelled
+                        ? $"Cancelled at {_completed}/{_totalHosts} hosts; found {results.Count} responsive."
+                        : $"Completed {_totalHosts} hosts; found {results.Count} responsive.");
                 }
+                return;
+            }
+            else
+            {
+                MessageBox.Show(errorMessage);
                 return;
             }
         }
         MessageBox.Show("Please enter a valid IPv4 address.");
     }
-    
+
+    private void buttonExport_Click(object sender, EventArgs e)
+    {
+        if (!results.Any())
+        {
+            MessageBox.Show("No results to export yet.");
+            return;
+        }
+
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            FileName = "network-scan.csv",
+            Title = "Export scan results"
+        };
+
+        if (dialog.ShowDialog() == DialogResult.OK)
+        {
+            try
+            {
+                var orderedResults = results
+                    .OrderBy(r => ConvertToUint(r.IpAddress))
+                    .ToList();
+
+                var builder = new StringBuilder();
+                builder.AppendLine("IP Address,Host Name,Ping Reply,Status,Roundtrip Time (ms)");
+                foreach (var entry in orderedResults)
+                {
+                    builder.AppendLine(string.Join(",",
+                        entry.IpAddress,
+                        EscapeCsv(entry.HostName),
+                        entry.PingReply,
+                        entry.Status,
+                        entry.RoundtripTime));
+                }
+
+                File.WriteAllText(dialog.FileName, builder.ToString());
+                MessageBox.Show($"Exported {orderedResults.Count} entries to {dialog.FileName}.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to export results: {ex.Message}");
+            }
+        }
+    }
+
     private void CancelScan()
     {
         if (_cts != null && !_cts.IsCancellationRequested)
@@ -179,44 +277,65 @@ public partial class Form1 : Form
         }
     }
 
-    private async Task PingNetworkAsync(string baseIp, CancellationToken token)
+    private void SetScanningUiState(bool scanning)
     {
-        var ipList = Enumerable.Range(1, 254)
+        comboBox1.Enabled = !scanning;
+        textBox1.Enabled = !scanning;
+        startRangeUpDown.Enabled = !scanning;
+        endRangeUpDown.Enabled = !scanning;
+        checkBoxResolveHosts.Enabled = !scanning;
+        numericTimeout.Enabled = !scanning;
+        buttonExport.Enabled = !scanning && results.Any();
+        progressBar1.Visible = scanning;
+        button1.Text = scanning ? "Cancel" : "Start";
+    }
+
+    private void SetStatus(string message)
+    {
+        labelStatus.Text = message;
+    }
+
+    private async Task PingNetworkAsync(string baseIp, int startHost, int endHost, bool resolveHosts, int timeoutMs, CancellationToken token)
+    {
+        var ipList = Enumerable.Range(startHost, endHost - startHost + 1)
             .Select(i => $"{baseIp}{i}")
             .ToList();
 
         var options = new ParallelOptions
         {
             CancellationToken = token,
-            MaxDegreeOfParallelism = Environment.ProcessorCount
+            MaxDegreeOfParallelism = Math.Min(256, Environment.ProcessorCount * 4)
         };
 
         await Parallel.ForEachAsync(ipList, options, async (ip, ct) =>
         {
-            await PingAddressAsync(ip, ct);
+            await PingAddressAsync(ip, resolveHosts, timeoutMs, ct);
         });
     }
 
-    private async Task PingAddressAsync(string ipString, CancellationToken token)
+    private async Task PingAddressAsync(string ipString, bool resolveHosts, int timeoutMs, CancellationToken token)
     {
         if (token.IsCancellationRequested)
             return;
         try
         {
             using var ping = new Ping();
-            PingReply pingReply = await ping.SendPingAsync(ipString, 3000);
+            PingReply pingReply = await ping.SendPingAsync(ipString, timeoutMs);
 
             if (pingReply.Status == IPStatus.Success)
             {
                 string name = "Unknown";
-                try
+                if (resolveHosts)
                 {
-                    var host = await Dns.GetHostEntryAsync(ipString);
-                    name = host.HostName;
-                }
-                catch
-                {
-                    // Ignore error in case cant resolve host
+                    try
+                    {
+                        var host = await Dns.GetHostEntryAsync(ipString);
+                        name = host.HostName;
+                    }
+                    catch
+                    {
+                        // Ignore error in case cant resolve host
+                    }
                 }
 
                 var entry = (IpAddress: ipString,
@@ -247,7 +366,31 @@ public partial class Form1 : Form
             {
                 if (count <= progressBar1.Maximum)
                     progressBar1.Value = count;
+                SetStatus($"Scanning: {count}/{_totalHosts} hosts; found {results.Count} responsive.");
             }));
         }
+    }
+
+    private static string EscapeCsv(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "";
+
+        bool requiresQuotes = value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r');
+        if (!requiresQuotes)
+            return value;
+
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+
+    private static uint ConvertToUint(string ipString)
+    {
+        var address = System.Net.IPAddress.Parse(ipString).GetAddressBytes();
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(address);
+        }
+
+        return BitConverter.ToUInt32(address, 0);
     }
 }

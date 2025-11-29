@@ -33,3 +33,5 @@ You can also run the application directly with the .NET CLI:
 ```
 
 Select a network interface from the drop-down, verify the starting IP address, and click **Scan** to discover hosts on your network. The **Scan** button changes to **Cancel** while scanning so you can stop the operation early.
+
+Use the **Start** and **End** host fields to narrow the scan range (default 1-254). After a scan, click **Export** to save the responsive hosts to a CSV file. Disable **Resolve hosts** or lower the **Timeout ms** setting to speed up scans when name lookups are slow.
