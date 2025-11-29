@@ -112,6 +112,7 @@ partial class Form1
         // 
         // button1
         // 
+        button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
         button1.BackColor = System.Drawing.Color.FromArgb(10, 132, 255);
         button1.FlatAppearance.BorderSize = 0;
         button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -127,6 +128,7 @@ partial class Form1
         //
         // buttonExport
         //
+        buttonExport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
         buttonExport.BackColor = System.Drawing.Color.FromArgb(229, 229, 234);
         buttonExport.FlatAppearance.BorderSize = 0;
         buttonExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -300,8 +302,7 @@ partial class Form1
         //
         // footerPanel
         //
-        footerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
+        footerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
         footerPanel.Controls.Add(button1);
         footerPanel.Controls.Add(buttonExport);
         footerPanel.Controls.Add(progressBar1);
