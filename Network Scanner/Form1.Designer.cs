@@ -273,7 +273,7 @@ partial class Form1
         // 
         labelHeader.AutoSize = true;
         labelHeader.Font = new System.Drawing.Font("Segoe UI Semibold", 14F, System.Drawing.FontStyle.Bold);
-        labelHeader.ForeColor = System.Drawing.Color.FromArgb(((int)((byte)29)), ((int)((byte)29)), ((int)((byte)31)));
+        labelHeader.ForeColor = System.Drawing.Color.FromArgb(10, 132, 255);
         labelHeader.Location = new System.Drawing.Point(12, 16);
         labelHeader.Name = "labelHeader";
         labelHeader.Size = new System.Drawing.Size(208, 25);
@@ -283,16 +283,18 @@ partial class Form1
         // labelStats
         // 
         labelStats.AutoSize = true;
+        labelStats.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
+        labelStats.ForeColor = System.Drawing.Color.FromArgb(10, 132, 255);
         labelStats.Location = new System.Drawing.Point(12, 40);
         labelStats.Name = "labelStats";
         labelStats.Size = new System.Drawing.Size(197, 17);
         labelStats.TabIndex = 15;
         labelStats.Text = "Online: 0 | Avg: - | Min: - | Max: -";
-        labelStats.Click += labelStats_Click;
         // 
         // labelCurrentTarget
         // 
         labelCurrentTarget.AutoSize = true;
+        labelCurrentTarget.ForeColor = System.Drawing.Color.FromArgb(48, 209, 88);
         labelCurrentTarget.Location = new System.Drawing.Point(12, 23);
         labelCurrentTarget.Name = "labelCurrentTarget";
         labelCurrentTarget.Size = new System.Drawing.Size(110, 17);

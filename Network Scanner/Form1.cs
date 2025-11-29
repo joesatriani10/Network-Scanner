@@ -68,7 +68,7 @@ public partial class Form1 : Form
         var headerStyle = new DataGridViewCellStyle
         {
             BackColor = Color.FromArgb(242, 242, 247),
-            ForeColor = Color.FromArgb(29, 29, 31),
+            ForeColor = Color.FromArgb(10, 132, 255),
             Font = new Font("Segoe UI Semibold", 9.75f, FontStyle.Bold, GraphicsUnit.Point),
             Alignment = DataGridViewContentAlignment.MiddleLeft
         };
