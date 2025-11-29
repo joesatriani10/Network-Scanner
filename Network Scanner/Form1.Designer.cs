@@ -380,6 +380,7 @@ partial class Form1
     private System.Windows.Forms.ToolStripMenuItem copyRowMenuItem;
     private System.Windows.Forms.Label labelStats;
     private System.Windows.Forms.Label labelCurrentTarget;
+    private System.Windows.Forms.Panel footerPanel;
 
     #endregion
 
