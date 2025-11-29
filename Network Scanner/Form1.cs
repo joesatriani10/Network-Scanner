@@ -239,6 +239,7 @@ public partial class Form1 : Form
                 finally
                 {
                     wasCancelled |= _cts?.IsCancellationRequested == true;
+                    progressBar1.Value = Math.Min(_completed, progressBar1.Maximum);
                     _cts?.Dispose();
                     _cts = null;
                     SetScanningUiState(false);
@@ -328,6 +329,17 @@ public partial class Form1 : Form
         labelStatus.Text = message;
     }
 
+    private void UpdateProgress(int completed)
+    {
+        if (_totalHosts <= 0)
+            return;
+
+        int clamped = Math.Min(completed, _totalHosts);
+        progressBar1.Value = Math.Max(progressBar1.Minimum, clamped);
+        int percent = (int)Math.Round(clamped * 100.0 / _totalHosts);
+        SetStatus($"Scanning: {clamped}/{_totalHosts} ({percent}%) hosts; found {results.Count} responsive.");
+    }
+
     private async Task PingNetworkAsync(List<string> ipList, bool resolveHosts, int timeoutMs, CancellationToken token)
     {
         var options = new ParallelOptions
@@ -399,9 +411,7 @@ public partial class Form1 : Form
             int count = Interlocked.Increment(ref _completed);
             this.Invoke((Action)(() =>
             {
-                if (count <= progressBar1.Maximum)
-                    progressBar1.Value = count;
-                SetStatus($"Scanning: {count}/{_totalHosts} hosts; found {results.Count} responsive.");
+                UpdateProgress(count);
             }));
         }
     }
