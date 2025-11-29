@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -19,6 +20,7 @@ public partial class Form1 : Form
     private CancellationTokenSource? _cts;
     private int _completed;
     private int _totalHosts;
+    private ConcurrentDictionary<string, int> _rowIndexes;
 
     public Form1()
     {
@@ -26,6 +28,7 @@ public partial class Form1 : Form
 
         // Initialize the concurrent bag to store results
         results = new ConcurrentBag<(string, string, string, IPStatus, long)>();
+        _rowIndexes = new ConcurrentDictionary<string, int>();
 
         // Initialize DataGridView columns
         InitializeDataGridView();
@@ -82,6 +85,18 @@ public partial class Form1 : Form
         dataGridView1.Columns.Add("PingReply", "Ping Reply");
         dataGridView1.Columns.Add("Status", "Status");
         dataGridView1.Columns.Add("RoundtripTime", "Roundtrip Time");
+    }
+
+    private void PrepareRows(IEnumerable<string> ipList)
+    {
+        dataGridView1.Rows.Clear();
+        int rowIndex = 0;
+        foreach (var ip in ipList)
+        {
+            _rowIndexes[ip] = rowIndex;
+            dataGridView1.Rows.Add(ip, "", "", "Pending", "-");
+            rowIndex++;
+        }
     }
 
     private void LoadNetworkInterfaces()
@@ -213,6 +228,7 @@ public partial class Form1 : Form
 
                 dataGridView1.Rows.Clear();
                 results = new ConcurrentBag<(string, string, string, IPStatus, long)>(); // Reset stored results
+                _rowIndexes = new ConcurrentDictionary<string, int>();
                 _cts = new CancellationTokenSource();
                 _completed = 0;
                 _totalHosts = end - start + 1;
@@ -222,12 +238,18 @@ public partial class Form1 : Form
                 SetStatus($"Scanning {baseIp}{start}-{end}...");
                 bool wasCancelled = false;
 
+                var ipList = Enumerable.Range(start, end - start + 1)
+                    .Select(i => $"{baseIp}{i}")
+                    .ToList();
+
+                PrepareRows(ipList);
+
                 bool resolveHosts = checkBoxResolveHosts.Checked;
                 int timeoutMs = (int)numericTimeout.Value;
 
                 try
                 {
-                    await PingNetworkAsync(baseIp, start, end, resolveHosts, timeoutMs, _cts.Token);
+                    await PingNetworkAsync(ipList, resolveHosts, timeoutMs, _cts.Token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -325,12 +347,8 @@ public partial class Form1 : Form
         labelStatus.Text = message;
     }
 
-    private async Task PingNetworkAsync(string baseIp, int startHost, int endHost, bool resolveHosts, int timeoutMs, CancellationToken token)
+    private async Task PingNetworkAsync(List<string> ipList, bool resolveHosts, int timeoutMs, CancellationToken token)
     {
-        var ipList = Enumerable.Range(startHost, endHost - startHost + 1)
-            .Select(i => $"{baseIp}{i}")
-            .ToList();
-
         var options = new ParallelOptions
         {
             CancellationToken = token,
@@ -347,20 +365,26 @@ public partial class Form1 : Form
     {
         if (token.IsCancellationRequested)
             return;
+        IPStatus status = IPStatus.Unknown;
+        long roundtripTime = 0;
+        string hostName = "";
+
         try
         {
             using var ping = new Ping();
             PingReply pingReply = await ping.SendPingAsync(ipString, timeoutMs);
+            status = pingReply.Status;
+            roundtripTime = pingReply.RoundtripTime;
 
             if (pingReply.Status == IPStatus.Success)
             {
-                string name = "Unknown";
+                hostName = "Unknown";
                 if (resolveHosts)
                 {
                     try
                     {
                         var host = await Dns.GetHostEntryAsync(ipString);
-                        name = host.HostName;
+                        hostName = host.HostName;
                     }
                     catch
                     {
@@ -369,20 +393,11 @@ public partial class Form1 : Form
                 }
 
                 var entry = (IpAddress: ipString,
-                              HostName: name,
+                              HostName: hostName,
                               PingReply: pingReply.Address?.ToString() ?? ipString,
                               Status: pingReply.Status,
                               RoundtripTime: pingReply.RoundtripTime);
                 results.Add(entry);
-                this.Invoke((Action)(() =>
-                {
-                    int rowIndex = dataGridView1.Rows.Add();
-                    dataGridView1.Rows[rowIndex].Cells[0].Value = entry.IpAddress;
-                    dataGridView1.Rows[rowIndex].Cells[1].Value = entry.HostName;
-                    dataGridView1.Rows[rowIndex].Cells[2].Value = entry.PingReply;
-                    dataGridView1.Rows[rowIndex].Cells[3].Value = entry.Status.ToString();
-                    dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
-                }));
             }
         }
         catch
@@ -394,6 +409,13 @@ public partial class Form1 : Form
             int count = Interlocked.Increment(ref _completed);
             this.Invoke((Action)(() =>
             {
+                if (_rowIndexes.TryGetValue(ipString, out int rowIndex) && rowIndex < dataGridView1.Rows.Count)
+                {
+                    dataGridView1.Rows[rowIndex].Cells[1].Value = hostName;
+                    dataGridView1.Rows[rowIndex].Cells[2].Value = ipString;
+                    dataGridView1.Rows[rowIndex].Cells[3].Value = status == IPStatus.Success ? "Online" : status.ToString();
+                    dataGridView1.Rows[rowIndex].Cells[4].Value = status == IPStatus.Success ? roundtripTime : "-";
+                }
                 if (count <= progressBar1.Maximum)
                     progressBar1.Value = count;
                 SetStatus($"Scanning: {count}/{_totalHosts} hosts; found {results.Count} responsive.");
