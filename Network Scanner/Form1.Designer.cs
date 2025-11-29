@@ -57,12 +57,14 @@ partial class Form1
         copyRowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         labelStats = new System.Windows.Forms.Label();
         labelCurrentTarget = new System.Windows.Forms.Label();
+        footerPanel = new System.Windows.Forms.Panel();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         ((System.ComponentModel.ISupportInitialize)startRangeUpDown).BeginInit();
         ((System.ComponentModel.ISupportInitialize)endRangeUpDown).BeginInit();
         ((System.ComponentModel.ISupportInitialize)numericTimeout).BeginInit();
         headerPanel.SuspendLayout();
         contextMenuStrip1.SuspendLayout();
+        footerPanel.SuspendLayout();
         SuspendLayout();
         // 
         // textBox1
@@ -78,7 +80,7 @@ partial class Form1
         dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
         dataGridView1.Location = new System.Drawing.Point(12, 100);
         dataGridView1.Name = "dataGridView1";
-        dataGridView1.Size = new System.Drawing.Size(876, 304);
+        dataGridView1.Size = new System.Drawing.Size(876, 288);
         dataGridView1.TabIndex = 1;
         dataGridView1.Text = "dataGridView1";
         dataGridView1.ContextMenuStrip = contextMenuStrip1;
@@ -110,12 +112,11 @@ partial class Form1
         // 
         // button1
         // 
-        button1.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
         button1.BackColor = System.Drawing.Color.FromArgb(10, 132, 255);
         button1.FlatAppearance.BorderSize = 0;
         button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
         button1.ForeColor = System.Drawing.Color.White;
-        button1.Location = new System.Drawing.Point(777, 414);
+        button1.Location = new System.Drawing.Point(675, 26);
         button1.Name = "button1";
         button1.Cursor = System.Windows.Forms.Cursors.Hand;
         button1.Size = new System.Drawing.Size(111, 29);
@@ -126,12 +127,11 @@ partial class Form1
         //
         // buttonExport
         //
-        buttonExport.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
         buttonExport.BackColor = System.Drawing.Color.FromArgb(229, 229, 234);
         buttonExport.FlatAppearance.BorderSize = 0;
         buttonExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
         buttonExport.ForeColor = System.Drawing.Color.FromArgb(29, 29, 31);
-        buttonExport.Location = new System.Drawing.Point(660, 414);
+        buttonExport.Location = new System.Drawing.Point(558, 26);
         buttonExport.Name = "buttonExport";
         buttonExport.Cursor = System.Windows.Forms.Cursors.Hand;
         buttonExport.Size = new System.Drawing.Size(111, 29);
@@ -150,11 +150,11 @@ partial class Form1
         //
         // progressBar1
         //
-        progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+        progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
-        progressBar1.Location = new System.Drawing.Point(12, 414);
+        progressBar1.Location = new System.Drawing.Point(12, 10);
         progressBar1.Name = "progressBar1";
-        progressBar1.Size = new System.Drawing.Size(530, 23);
+        progressBar1.Size = new System.Drawing.Size(540, 10);
         progressBar1.TabIndex = 4;
         progressBar1.Visible = false;
         progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
@@ -273,7 +273,7 @@ partial class Form1
         // labelStats
         //
         labelStats.AutoSize = true;
-        labelStats.Location = new System.Drawing.Point(12, 374);
+        labelStats.Location = new System.Drawing.Point(12, 44);
         labelStats.Name = "labelStats";
         labelStats.Size = new System.Drawing.Size(149, 15);
         labelStats.TabIndex = 15;
@@ -282,7 +282,7 @@ partial class Form1
         // labelCurrentTarget
         //
         labelCurrentTarget.AutoSize = true;
-        labelCurrentTarget.Location = new System.Drawing.Point(12, 354);
+        labelCurrentTarget.Location = new System.Drawing.Point(12, 26);
         labelCurrentTarget.Name = "labelCurrentTarget";
         labelCurrentTarget.Size = new System.Drawing.Size(108, 15);
         labelCurrentTarget.TabIndex = 16;
@@ -292,11 +292,26 @@ partial class Form1
         //
         labelStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
         labelStatus.AutoSize = true;
-        labelStatus.Location = new System.Drawing.Point(12, 394);
+        labelStatus.Location = new System.Drawing.Point(12, 61);
         labelStatus.Name = "labelStatus";
         labelStatus.Size = new System.Drawing.Size(36, 15);
         labelStatus.TabIndex = 10;
         labelStatus.Text = "Ready";
+        //
+        // footerPanel
+        //
+        footerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+        footerPanel.Controls.Add(button1);
+        footerPanel.Controls.Add(buttonExport);
+        footerPanel.Controls.Add(progressBar1);
+        footerPanel.Controls.Add(labelStatus);
+        footerPanel.Controls.Add(labelStats);
+        footerPanel.Controls.Add(labelCurrentTarget);
+        footerPanel.Location = new System.Drawing.Point(0, 394);
+        footerPanel.Name = "footerPanel";
+        footerPanel.Size = new System.Drawing.Size(900, 66);
+        footerPanel.TabIndex = 17;
         //
         // Form1
         //
@@ -309,16 +324,12 @@ partial class Form1
         Controls.Add(labelTimeout);
         Controls.Add(checkBoxResolveHosts);
         Controls.Add(labelStatus);
-        Controls.Add(labelStats);
-        Controls.Add(labelCurrentTarget);
         Controls.Add(endRangeUpDown);
         Controls.Add(startRangeUpDown);
         Controls.Add(labelEnd);
         Controls.Add(labelStart);
-        Controls.Add(buttonExport);
-        Controls.Add(progressBar1);
         Controls.Add(comboBox1);
-        Controls.Add(button1);
+        Controls.Add(footerPanel);
         Controls.Add(dataGridView1);
         Controls.Add(textBox1);
         Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
@@ -331,6 +342,8 @@ partial class Form1
         headerPanel.ResumeLayout(false);
         headerPanel.PerformLayout();
         contextMenuStrip1.ResumeLayout(false);
+        footerPanel.ResumeLayout(false);
+        footerPanel.PerformLayout();
         ResumeLayout(false);
         PerformLayout();
     }
