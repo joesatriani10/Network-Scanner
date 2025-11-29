@@ -2,8 +2,8 @@
 
 Sleek Windows Forms utility for fast LAN sweeps. Pick an interface, set a host range, and get a responsive host list with round-trip times and optional DNS lookups. Built for my software dev portfolio.
 
-![Network Scanner screenshot placeholder](docs/screenshot-placeholder.png)
-_Drop your favorite UI capture here when ready._
+<img width="902" height="719" alt="image" src="https://github.com/user-attachments/assets/927c5e92-4935-466a-8c6e-3ff613fbfa51" />
+
 
 ## Highlights
 - Ping a custom host range (default 1-254) with cancellable progress
