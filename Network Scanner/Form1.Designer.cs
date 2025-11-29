@@ -30,6 +30,7 @@ partial class Form1
     /// </summary>
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
         textBox1 = new System.Windows.Forms.TextBox();
         dataGridView1 = new System.Windows.Forms.DataGridView();
         IPAddress = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -51,11 +52,17 @@ partial class Form1
         numericTimeout = new System.Windows.Forms.NumericUpDown();
         headerPanel = new System.Windows.Forms.Panel();
         labelHeader = new System.Windows.Forms.Label();
+        contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
+        copyIpMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        copyRowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        labelStats = new System.Windows.Forms.Label();
+        labelCurrentTarget = new System.Windows.Forms.Label();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         ((System.ComponentModel.ISupportInitialize)startRangeUpDown).BeginInit();
         ((System.ComponentModel.ISupportInitialize)endRangeUpDown).BeginInit();
         ((System.ComponentModel.ISupportInitialize)numericTimeout).BeginInit();
         headerPanel.SuspendLayout();
+        contextMenuStrip1.SuspendLayout();
         SuspendLayout();
         // 
         // textBox1
@@ -74,6 +81,7 @@ partial class Form1
         dataGridView1.Size = new System.Drawing.Size(876, 304);
         dataGridView1.TabIndex = 1;
         dataGridView1.Text = "dataGridView1";
+        dataGridView1.ContextMenuStrip = contextMenuStrip1;
         // 
         // IPAddress
         // 
@@ -242,6 +250,44 @@ partial class Form1
         labelHeader.TabIndex = 0;
         labelHeader.Text = "Network Scanner · Fast";
         //
+        // contextMenuStrip1
+        //
+        contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { copyIpMenuItem, copyRowMenuItem });
+        contextMenuStrip1.Name = "contextMenuStrip1";
+        contextMenuStrip1.Size = new System.Drawing.Size(148, 48);
+        //
+        // copyIpMenuItem
+        //
+        copyIpMenuItem.Name = "copyIpMenuItem";
+        copyIpMenuItem.Size = new System.Drawing.Size(147, 22);
+        copyIpMenuItem.Text = "Copy IP";
+        copyIpMenuItem.Click += copyIpMenuItem_Click;
+        //
+        // copyRowMenuItem
+        //
+        copyRowMenuItem.Name = "copyRowMenuItem";
+        copyRowMenuItem.Size = new System.Drawing.Size(147, 22);
+        copyRowMenuItem.Text = "Copy Row";
+        copyRowMenuItem.Click += copyRowMenuItem_Click;
+        //
+        // labelStats
+        //
+        labelStats.AutoSize = true;
+        labelStats.Location = new System.Drawing.Point(12, 374);
+        labelStats.Name = "labelStats";
+        labelStats.Size = new System.Drawing.Size(149, 15);
+        labelStats.TabIndex = 15;
+        labelStats.Text = "Online: 0 | Avg: - | Min: - | Max: -";
+        //
+        // labelCurrentTarget
+        //
+        labelCurrentTarget.AutoSize = true;
+        labelCurrentTarget.Location = new System.Drawing.Point(12, 354);
+        labelCurrentTarget.Name = "labelCurrentTarget";
+        labelCurrentTarget.Size = new System.Drawing.Size(108, 15);
+        labelCurrentTarget.TabIndex = 16;
+        labelCurrentTarget.Text = "Current: Waiting...";
+        //
         // labelStatus
         //
         labelStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -263,6 +309,8 @@ partial class Form1
         Controls.Add(labelTimeout);
         Controls.Add(checkBoxResolveHosts);
         Controls.Add(labelStatus);
+        Controls.Add(labelStats);
+        Controls.Add(labelCurrentTarget);
         Controls.Add(endRangeUpDown);
         Controls.Add(startRangeUpDown);
         Controls.Add(labelEnd);
@@ -282,6 +330,7 @@ partial class Form1
         ((System.ComponentModel.ISupportInitialize)numericTimeout).EndInit();
         headerPanel.ResumeLayout(false);
         headerPanel.PerformLayout();
+        contextMenuStrip1.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
@@ -313,6 +362,11 @@ partial class Form1
     private System.Windows.Forms.NumericUpDown numericTimeout;
     private System.Windows.Forms.Panel headerPanel;
     private System.Windows.Forms.Label labelHeader;
+    private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+    private System.Windows.Forms.ToolStripMenuItem copyIpMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem copyRowMenuItem;
+    private System.Windows.Forms.Label labelStats;
+    private System.Windows.Forms.Label labelCurrentTarget;
 
     #endregion
 

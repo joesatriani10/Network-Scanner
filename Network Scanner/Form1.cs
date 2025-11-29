@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace Network_Scanner;
 
@@ -19,6 +20,10 @@ public partial class Form1 : Form
     private CancellationTokenSource? _cts;
     private int _completed;
     private int _totalHosts;
+    private int _onlineCount;
+    private long _latencyTotal;
+    private long _latencyMin;
+    private long _latencyMax;
 
     public Form1()
     {
@@ -42,7 +47,10 @@ public partial class Form1 : Form
 
         buttonExport.Enabled = false;
         labelStatus.Text = "Ready";
+        labelStats.Text = "Online: 0 | Avg: - | Min: - | Max: -";
+        labelCurrentTarget.Text = "Current: Waiting...";
         DoubleBuffered = true;
+        dataGridView1.CellDoubleClick += dataGridView1_CellDoubleClick;
     }
 
     private void InitializeDataGridView()
@@ -76,6 +84,8 @@ public partial class Form1 : Form
             BackColor = Color.FromArgb(245, 247, 252)
         };
         dataGridView1.RowTemplate.Height = 28;
+        dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        dataGridView1.MultiSelect = false;
         dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         dataGridView1.Columns.Add("IPAddress", "IP Address");
         dataGridView1.Columns.Add("HostName", "Host Name");
@@ -216,6 +226,7 @@ public partial class Form1 : Form
                 _cts = new CancellationTokenSource();
                 _completed = 0;
                 _totalHosts = end - start + 1;
+                ResetStats();
                 progressBar1.Value = 0;
                 progressBar1.Maximum = _totalHosts;
                 SetScanningUiState(true);
@@ -243,6 +254,8 @@ public partial class Form1 : Form
                     _cts?.Dispose();
                     _cts = null;
                     SetScanningUiState(false);
+                    UpdateCurrentTarget("Finished");
+                    UpdateStatsLabels();
                     SetStatus(wasCancelled
                         ? $"Cancelled at {_completed}/{_totalHosts} hosts; found {results.Count} responsive."
                         : $"Completed {_totalHosts} hosts; found {results.Count} responsive.");
@@ -329,6 +342,16 @@ public partial class Form1 : Form
         labelStatus.Text = message;
     }
 
+    private void ResetStats()
+    {
+        _onlineCount = 0;
+        _latencyTotal = 0;
+        _latencyMin = long.MaxValue;
+        _latencyMax = 0;
+        UpdateStatsLabels();
+        UpdateCurrentTarget("Waiting...");
+    }
+
     private void UpdateProgress(int completed)
     {
         if (_totalHosts <= 0)
@@ -338,6 +361,41 @@ public partial class Form1 : Form
         progressBar1.Value = Math.Max(progressBar1.Minimum, clamped);
         int percent = (int)Math.Round(clamped * 100.0 / _totalHosts);
         SetStatus($"Scanning: {clamped}/{_totalHosts} ({percent}%) hosts; found {results.Count} responsive.");
+        UpdateStatsLabels();
+    }
+
+    private void UpdateStatsLabels()
+    {
+        int online = _onlineCount;
+        long total = Interlocked.Read(ref _latencyTotal);
+        long min = Interlocked.Read(ref _latencyMin);
+        long max = Interlocked.Read(ref _latencyMax);
+
+        string minStr = min == long.MaxValue ? "-" : $"{min} ms";
+        string maxStr = max == 0 && online == 0 ? "-" : $"{max} ms";
+        string avgStr = online > 0 ? $"{total / online} ms" : "-";
+
+        labelStats.Text = $"Online: {online} | Avg: {avgStr} | Min: {minStr} | Max: {maxStr}";
+    }
+
+    private void UpdateCurrentTarget(string text)
+    {
+        labelCurrentTarget.Text = $"Current: {text}";
+    }
+
+    private DataGridViewRow? GetSelectedRow()
+    {
+        if (dataGridView1.SelectedRows.Count > 0)
+        {
+            return dataGridView1.SelectedRows[0];
+        }
+
+        if (dataGridView1.CurrentRow != null)
+        {
+            return dataGridView1.CurrentRow;
+        }
+
+        return null;
     }
 
     private async Task PingNetworkAsync(List<string> ipList, bool resolveHosts, int timeoutMs, CancellationToken token)
@@ -371,6 +429,7 @@ public partial class Form1 : Form
 
             if (pingReply.Status == IPStatus.Success)
             {
+                this.Invoke((Action)(() => UpdateCurrentTarget(ipString)));
                 hostName = "Unknown";
                 if (resolveHosts)
                 {
@@ -391,6 +450,7 @@ public partial class Form1 : Form
                               Status: pingReply.Status,
                               RoundtripTime: pingReply.RoundtripTime);
                 results.Add(entry);
+                TrackLatency(entry.RoundtripTime);
                 this.Invoke((Action)(() =>
                 {
                     int rowIndex = dataGridView1.Rows.Add();
@@ -399,6 +459,9 @@ public partial class Form1 : Form
                     dataGridView1.Rows[rowIndex].Cells[2].Value = entry.PingReply;
                     dataGridView1.Rows[rowIndex].Cells[3].Value = entry.Status.ToString();
                     dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
+                    dataGridView1.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(225, 245, 233);
+                    dataGridView1.Rows[rowIndex].DefaultCellStyle.SelectionBackColor = Color.FromArgb(187, 222, 212);
+                    UpdateStatsLabels();
                 }));
             }
         }
@@ -437,5 +500,80 @@ public partial class Form1 : Form
         }
 
         return BitConverter.ToUInt32(address, 0);
+    }
+
+    private void TrackLatency(long rtt)
+    {
+        Interlocked.Increment(ref _onlineCount);
+        Interlocked.Add(ref _latencyTotal, rtt);
+        UpdateMin(ref _latencyMin, rtt);
+        UpdateMax(ref _latencyMax, rtt);
+    }
+
+    private static void UpdateMin(ref long target, long candidate)
+    {
+        long current;
+        do
+        {
+            current = Interlocked.Read(ref target);
+            if (candidate >= current)
+                return;
+        } while (Interlocked.CompareExchange(ref target, candidate, current) != current);
+    }
+
+    private static void UpdateMax(ref long target, long candidate)
+    {
+        long current;
+        do
+        {
+            current = Interlocked.Read(ref target);
+            if (candidate <= current)
+                return;
+        } while (Interlocked.CompareExchange(ref target, candidate, current) != current);
+    }
+
+    private void copyIpMenuItem_Click(object sender, EventArgs e)
+    {
+        var row = GetSelectedRow();
+        if (row == null)
+            return;
+
+        var ip = row.Cells[0].Value?.ToString();
+        if (!string.IsNullOrEmpty(ip))
+        {
+            Clipboard.SetText(ip);
+            SetStatus($"Copied {ip} to clipboard.");
+        }
+    }
+
+    private void copyRowMenuItem_Click(object sender, EventArgs e)
+    {
+        var row = GetSelectedRow();
+        if (row == null)
+            return;
+
+        var cells = row.Cells;
+        string rowText = string.Join(",",
+            cells[0].Value?.ToString() ?? "",
+            cells[1].Value?.ToString() ?? "",
+            cells[2].Value?.ToString() ?? "",
+            cells[3].Value?.ToString() ?? "",
+            cells[4].Value?.ToString() ?? "");
+
+        Clipboard.SetText(rowText);
+        SetStatus("Copied row to clipboard.");
+    }
+
+    private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+    {
+        if (e.RowIndex < 0)
+            return;
+
+        var ip = dataGridView1.Rows[e.RowIndex].Cells[0].Value?.ToString();
+        if (!string.IsNullOrEmpty(ip))
+        {
+            Clipboard.SetText(ip);
+            SetStatus($"Copied {ip} to clipboard.");
+        }
     }
 }
