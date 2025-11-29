@@ -69,7 +69,7 @@ partial class Form1
         // 
         // textBox1
         // 
-        textBox1.Location = new System.Drawing.Point(164, 90);
+        textBox1.Location = new System.Drawing.Point(164, 53);
         textBox1.Name = "textBox1";
         textBox1.Size = new System.Drawing.Size(160, 25);
         textBox1.TabIndex = 0;
@@ -79,9 +79,9 @@ partial class Form1
         dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right));
         dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
         dataGridView1.ContextMenuStrip = contextMenuStrip1;
-        dataGridView1.Location = new System.Drawing.Point(12, 145);
+        dataGridView1.Location = new System.Drawing.Point(12, 85);
         dataGridView1.Name = "dataGridView1";
-        dataGridView1.Size = new System.Drawing.Size(876, 479);
+        dataGridView1.Size = new System.Drawing.Size(876, 413);
         dataGridView1.TabIndex = 1;
         dataGridView1.Text = "dataGridView1";
         // 
@@ -133,14 +133,14 @@ partial class Form1
         // button1
         // 
         button1.Anchor = ((System.Windows.Forms.AnchorStyles)(System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right));
-        button1.BackColor = System.Drawing.Color.FromArgb(((int)((byte)10)), ((int)((byte)132)), ((int)((byte)255)));
+        button1.BackColor = System.Drawing.Color.FromArgb(((int)((byte)55)), ((int)((byte)60)), ((int)((byte)65)));
         button1.Cursor = System.Windows.Forms.Cursors.Hand;
         button1.FlatAppearance.BorderSize = 0;
         button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
         button1.ForeColor = System.Drawing.Color.White;
-        button1.Location = new System.Drawing.Point(777, 27);
+        button1.Location = new System.Drawing.Point(777, 35);
         button1.Name = "button1";
-        button1.Size = new System.Drawing.Size(111, 42);
+        button1.Size = new System.Drawing.Size(111, 54);
         button1.TabIndex = 2;
         button1.Text = "Start";
         button1.UseVisualStyleBackColor = false;
@@ -149,14 +149,14 @@ partial class Form1
         // buttonExport
         // 
         buttonExport.Anchor = ((System.Windows.Forms.AnchorStyles)(System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right));
-        buttonExport.BackColor = System.Drawing.Color.FromArgb(((int)((byte)229)), ((int)((byte)229)), ((int)((byte)234)));
+        buttonExport.BackColor = System.Drawing.Color.FromArgb(((int)((byte)235)), ((int)((byte)235)), ((int)((byte)235)));
         buttonExport.Cursor = System.Windows.Forms.Cursors.Hand;
         buttonExport.FlatAppearance.BorderSize = 0;
         buttonExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-        buttonExport.ForeColor = System.Drawing.Color.FromArgb(((int)((byte)29)), ((int)((byte)29)), ((int)((byte)31)));
-        buttonExport.Location = new System.Drawing.Point(660, 27);
+        buttonExport.ForeColor = System.Drawing.Color.FromArgb(((int)((byte)40)), ((int)((byte)40)), ((int)((byte)40)));
+        buttonExport.Location = new System.Drawing.Point(660, 35);
         buttonExport.Name = "buttonExport";
-        buttonExport.Size = new System.Drawing.Size(111, 42);
+        buttonExport.Size = new System.Drawing.Size(111, 54);
         buttonExport.TabIndex = 9;
         buttonExport.Text = "Export";
         buttonExport.UseVisualStyleBackColor = false;
@@ -165,7 +165,7 @@ partial class Form1
         // comboBox1
         // 
         comboBox1.FormattingEnabled = true;
-        comboBox1.Location = new System.Drawing.Point(12, 90);
+        comboBox1.Location = new System.Drawing.Point(12, 53);
         comboBox1.Name = "comboBox1";
         comboBox1.Size = new System.Drawing.Size(146, 25);
         comboBox1.TabIndex = 3;
@@ -173,9 +173,9 @@ partial class Form1
         // progressBar1
         // 
         progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right));
-        progressBar1.Location = new System.Drawing.Point(12, 7);
+        progressBar1.Location = new System.Drawing.Point(12, 9);
         progressBar1.Name = "progressBar1";
-        progressBar1.Size = new System.Drawing.Size(876, 14);
+        progressBar1.Size = new System.Drawing.Size(876, 18);
         progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
         progressBar1.TabIndex = 4;
         progressBar1.Visible = false;
@@ -183,7 +183,7 @@ partial class Form1
         // labelStart
         // 
         labelStart.AutoSize = true;
-        labelStart.Location = new System.Drawing.Point(334, 96);
+        labelStart.Location = new System.Drawing.Point(334, 61);
         labelStart.Name = "labelStart";
         labelStart.Size = new System.Drawing.Size(35, 17);
         labelStart.TabIndex = 5;
@@ -192,7 +192,7 @@ partial class Form1
         // labelEnd
         // 
         labelEnd.AutoSize = true;
-        labelEnd.Location = new System.Drawing.Point(446, 96);
+        labelEnd.Location = new System.Drawing.Point(446, 61);
         labelEnd.Name = "labelEnd";
         labelEnd.Size = new System.Drawing.Size(30, 17);
         labelEnd.TabIndex = 6;
@@ -200,7 +200,7 @@ partial class Form1
         // 
         // startRangeUpDown
         // 
-        startRangeUpDown.Location = new System.Drawing.Point(372, 90);
+        startRangeUpDown.Location = new System.Drawing.Point(372, 53);
         startRangeUpDown.Maximum = new decimal(new int[] { 254, 0, 0, 0 });
         startRangeUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
         startRangeUpDown.Name = "startRangeUpDown";
@@ -210,7 +210,7 @@ partial class Form1
         // 
         // endRangeUpDown
         // 
-        endRangeUpDown.Location = new System.Drawing.Point(480, 90);
+        endRangeUpDown.Location = new System.Drawing.Point(480, 53);
         endRangeUpDown.Maximum = new decimal(new int[] { 254, 0, 0, 0 });
         endRangeUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
         endRangeUpDown.Name = "endRangeUpDown";
@@ -221,7 +221,7 @@ partial class Form1
         // labelStatus
         // 
         labelStatus.AutoSize = true;
-        labelStatus.Location = new System.Drawing.Point(12, 57);
+        labelStatus.Location = new System.Drawing.Point(12, 74);
         labelStatus.Name = "labelStatus";
         labelStatus.Size = new System.Drawing.Size(44, 17);
         labelStatus.TabIndex = 10;
@@ -232,7 +232,7 @@ partial class Form1
         checkBoxResolveHosts.AutoSize = true;
         checkBoxResolveHosts.Checked = true;
         checkBoxResolveHosts.CheckState = System.Windows.Forms.CheckState.Checked;
-        checkBoxResolveHosts.Location = new System.Drawing.Point(558, 94);
+        checkBoxResolveHosts.Location = new System.Drawing.Point(558, 58);
         checkBoxResolveHosts.Name = "checkBoxResolveHosts";
         checkBoxResolveHosts.Size = new System.Drawing.Size(107, 21);
         checkBoxResolveHosts.TabIndex = 11;
@@ -242,7 +242,7 @@ partial class Form1
         // labelTimeout
         // 
         labelTimeout.AutoSize = true;
-        labelTimeout.Location = new System.Drawing.Point(670, 96);
+        labelTimeout.Location = new System.Drawing.Point(670, 61);
         labelTimeout.Name = "labelTimeout";
         labelTimeout.Size = new System.Drawing.Size(76, 17);
         labelTimeout.TabIndex = 12;
@@ -251,30 +251,31 @@ partial class Form1
         // numericTimeout
         // 
         numericTimeout.Increment = new decimal(new int[] { 100, 0, 0, 0 });
-        numericTimeout.Location = new System.Drawing.Point(740, 90);
+        numericTimeout.Location = new System.Drawing.Point(748, 53);
         numericTimeout.Maximum = new decimal(new int[] { 5000, 0, 0, 0 });
         numericTimeout.Minimum = new decimal(new int[] { 100, 0, 0, 0 });
         numericTimeout.Name = "numericTimeout";
         numericTimeout.Size = new System.Drawing.Size(92, 25);
         numericTimeout.TabIndex = 13;
         numericTimeout.Value = new decimal(new int[] { 1000, 0, 0, 0 });
+        numericTimeout.ValueChanged += numericTimeout_ValueChanged;
         // 
         // headerPanel
         // 
-        headerPanel.BackColor = System.Drawing.Color.FromArgb(((int)((byte)245)), ((int)((byte)245)), ((int)((byte)247)));
+        headerPanel.BackColor = System.Drawing.Color.FromArgb(((int)((byte)224)), ((int)((byte)224)), ((int)((byte)224)));
         headerPanel.Controls.Add(labelHeader);
         headerPanel.Dock = System.Windows.Forms.DockStyle.Top;
         headerPanel.Location = new System.Drawing.Point(0, 0);
         headerPanel.Name = "headerPanel";
-        headerPanel.Size = new System.Drawing.Size(900, 67);
+        headerPanel.Size = new System.Drawing.Size(900, 47);
         headerPanel.TabIndex = 14;
         // 
         // labelHeader
         // 
         labelHeader.AutoSize = true;
         labelHeader.Font = new System.Drawing.Font("Segoe UI Semibold", 14F, System.Drawing.FontStyle.Bold);
-        labelHeader.ForeColor = System.Drawing.Color.FromArgb(10, 132, 255);
-        labelHeader.Location = new System.Drawing.Point(12, 16);
+        labelHeader.ForeColor = System.Drawing.Color.FromArgb(((int)((byte)45)), ((int)((byte)45)), ((int)((byte)45)));
+        labelHeader.Location = new System.Drawing.Point(12, 9);
         labelHeader.Name = "labelHeader";
         labelHeader.Size = new System.Drawing.Size(208, 25);
         labelHeader.TabIndex = 0;
@@ -284,18 +285,18 @@ partial class Form1
         // 
         labelStats.AutoSize = true;
         labelStats.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
-        labelStats.ForeColor = System.Drawing.Color.FromArgb(10, 132, 255);
-        labelStats.Location = new System.Drawing.Point(12, 40);
+        labelStats.ForeColor = System.Drawing.Color.FromArgb(((int)((byte)10)), ((int)((byte)132)), ((int)((byte)255)));
+        labelStats.Location = new System.Drawing.Point(12, 51);
         labelStats.Name = "labelStats";
-        labelStats.Size = new System.Drawing.Size(197, 17);
+        labelStats.Size = new System.Drawing.Size(206, 17);
         labelStats.TabIndex = 15;
         labelStats.Text = "Online: 0 | Avg: - | Min: - | Max: -";
         // 
         // labelCurrentTarget
         // 
         labelCurrentTarget.AutoSize = true;
-        labelCurrentTarget.ForeColor = System.Drawing.Color.FromArgb(48, 209, 88);
-        labelCurrentTarget.Location = new System.Drawing.Point(12, 23);
+        labelCurrentTarget.ForeColor = System.Drawing.Color.FromArgb(((int)((byte)48)), ((int)((byte)209)), ((int)((byte)88)));
+        labelCurrentTarget.Location = new System.Drawing.Point(12, 29);
         labelCurrentTarget.Name = "labelCurrentTarget";
         labelCurrentTarget.Size = new System.Drawing.Size(110, 17);
         labelCurrentTarget.TabIndex = 16;
@@ -310,9 +311,9 @@ partial class Form1
         footerPanel.Controls.Add(labelStats);
         footerPanel.Controls.Add(labelCurrentTarget);
         footerPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-        footerPanel.Location = new System.Drawing.Point(0, 630);
+        footerPanel.Location = new System.Drawing.Point(0, 504);
         footerPanel.Name = "footerPanel";
-        footerPanel.Size = new System.Drawing.Size(900, 79);
+        footerPanel.Size = new System.Drawing.Size(900, 102);
         footerPanel.TabIndex = 17;
         // 
         // Form1
@@ -320,7 +321,7 @@ partial class Form1
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
         BackColor = System.Drawing.Color.FromArgb(((int)((byte)247)), ((int)((byte)248)), ((int)((byte)250)));
-        ClientSize = new System.Drawing.Size(900, 709);
+        ClientSize = new System.Drawing.Size(900, 606);
         Controls.Add(headerPanel);
         Controls.Add(numericTimeout);
         Controls.Add(labelTimeout);

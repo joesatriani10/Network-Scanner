@@ -68,7 +68,7 @@ public partial class Form1 : Form
         var headerStyle = new DataGridViewCellStyle
         {
             BackColor = Color.FromArgb(242, 242, 247),
-            ForeColor = Color.FromArgb(10, 132, 255),
+            ForeColor = Color.FromArgb(45, 45, 45),
             Font = new Font("Segoe UI Semibold", 9.75f, FontStyle.Bold, GraphicsUnit.Point),
             Alignment = DataGridViewContentAlignment.MiddleLeft
         };
@@ -583,6 +583,11 @@ public partial class Form1 : Form
     }
 
     private void labelStats_Click(object sender, EventArgs e)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    private void numericTimeout_ValueChanged(object sender, EventArgs e)
     {
         throw new System.NotImplementedException();
     }
