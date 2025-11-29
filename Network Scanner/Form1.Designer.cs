@@ -111,7 +111,7 @@ partial class Form1
         // button1
         // 
         button1.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-        button1.BackColor = System.Drawing.Color.FromArgb(30, 80, 200);
+        button1.BackColor = System.Drawing.Color.FromArgb(10, 132, 255);
         button1.FlatAppearance.BorderSize = 0;
         button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
         button1.ForeColor = System.Drawing.Color.White;
@@ -127,10 +127,10 @@ partial class Form1
         // buttonExport
         //
         buttonExport.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-        buttonExport.BackColor = System.Drawing.Color.FromArgb(39, 54, 77);
+        buttonExport.BackColor = System.Drawing.Color.FromArgb(229, 229, 234);
         buttonExport.FlatAppearance.BorderSize = 0;
         buttonExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-        buttonExport.ForeColor = System.Drawing.Color.White;
+        buttonExport.ForeColor = System.Drawing.Color.FromArgb(29, 29, 31);
         buttonExport.Location = new System.Drawing.Point(660, 414);
         buttonExport.Name = "buttonExport";
         buttonExport.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -231,7 +231,7 @@ partial class Form1
         //
         // headerPanel
         //
-        headerPanel.BackColor = System.Drawing.Color.FromArgb(20, 32, 48);
+        headerPanel.BackColor = System.Drawing.Color.FromArgb(245, 245, 247);
         headerPanel.Controls.Add(labelHeader);
         headerPanel.Dock = System.Windows.Forms.DockStyle.Top;
         headerPanel.Location = new System.Drawing.Point(0, 0);
@@ -243,7 +243,7 @@ partial class Form1
         //
         labelHeader.AutoSize = true;
         labelHeader.Font = new System.Drawing.Font("Segoe UI Semibold", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-        labelHeader.ForeColor = System.Drawing.Color.White;
+        labelHeader.ForeColor = System.Drawing.Color.FromArgb(29, 29, 31);
         labelHeader.Location = new System.Drawing.Point(12, 11);
         labelHeader.Name = "labelHeader";
         labelHeader.Size = new System.Drawing.Size(210, 25);
@@ -302,7 +302,7 @@ partial class Form1
         //
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        BackColor = System.Drawing.Color.FromArgb(245, 247, 252);
+        BackColor = System.Drawing.Color.FromArgb(247, 248, 250);
         ClientSize = new System.Drawing.Size(900, 460);
         Controls.Add(headerPanel);
         Controls.Add(numericTimeout);

@@ -67,21 +67,21 @@ public partial class Form1 : Form
 
         var headerStyle = new DataGridViewCellStyle
         {
-            BackColor = Color.FromArgb(30, 80, 200),
-            ForeColor = Color.White,
+            BackColor = Color.FromArgb(242, 242, 247),
+            ForeColor = Color.FromArgb(29, 29, 31),
             Font = new Font("Segoe UI Semibold", 9.75f, FontStyle.Bold, GraphicsUnit.Point),
             Alignment = DataGridViewContentAlignment.MiddleLeft
         };
         dataGridView1.ColumnHeadersDefaultCellStyle = headerStyle;
         dataGridView1.ColumnHeadersHeight = 32;
 
-        dataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(230, 240, 255);
+        dataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(221, 235, 255);
         dataGridView1.DefaultCellStyle.SelectionForeColor = Color.Black;
-        dataGridView1.GridColor = Color.FromArgb(220, 228, 235);
+        dataGridView1.GridColor = Color.FromArgb(229, 229, 234);
 
         dataGridView1.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
         {
-            BackColor = Color.FromArgb(245, 247, 252)
+            BackColor = Color.FromArgb(251, 251, 253)
         };
         dataGridView1.RowTemplate.Height = 28;
         dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -459,8 +459,8 @@ public partial class Form1 : Form
                     dataGridView1.Rows[rowIndex].Cells[2].Value = entry.PingReply;
                     dataGridView1.Rows[rowIndex].Cells[3].Value = entry.Status.ToString();
                     dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
-                    dataGridView1.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(225, 245, 233);
-                    dataGridView1.Rows[rowIndex].DefaultCellStyle.SelectionBackColor = Color.FromArgb(187, 222, 212);
+                    dataGridView1.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(230, 238, 255);
+                    dataGridView1.Rows[rowIndex].DefaultCellStyle.SelectionBackColor = Color.FromArgb(206, 224, 255);
                     UpdateStatsLabels();
                 }));
             }
