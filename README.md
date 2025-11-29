@@ -1,37 +1,54 @@
-﻿# Network Scanner
+# Network Scanner
 
-Network Scanner is a simple Windows Forms application that scans your local network by sending ping requests to IP addresses in the selected interface's subnet. Active hosts and their response times are displayed in a table.
+Sleek Windows Forms utility for fast LAN sweeps. Pick an interface, set a host range, and get a responsive host list with round-trip times and optional DNS lookups. Built for my software dev portfolio.
 
-## Building
+![Network Scanner screenshot placeholder](docs/screenshot-placeholder.png)
+_Drop your favorite UI capture here when ready._
 
-The project targets **.NET 9.0 for Windows**. You can build it with the .NET SDK or with Visual Studio 2022 or later.
+## Highlights
+- Ping a custom host range (default 1-254) with cancellable progress
+- Optional hostname resolution (DNS + NetBIOS + multicast fallback) to keep scans useful even when PTR records are missing
+- Adjustable timeout for noisy networks
+- Export responsive hosts to CSV in one click
+- Designed for Windows with .NET 9 and modern WinForms styling
 
-### Using the .NET SDK
+## Quick Start
 
+### Prerequisites
+- Windows 10/11 with .NET 9 SDK installed
+- ICMP allowed by your firewall for ping requests
+
+### Build with .NET SDK
 ```bash
-# Restore NuGet packages
- dotnet restore
-
-# Build the application
- dotnet build "Network Scanner.sln"
+dotnet restore
+dotnet build "Network Scanner.sln"
 ```
 
-### Using Visual Studio
-
-1. Open `Network Scanner.sln` in Visual Studio.
-2. Choose the desired configuration (Debug or Release).
+### Build with Visual Studio
+1. Open `Network Scanner.sln` in Visual Studio 2022 or later.
+2. Choose Debug or Release.
 3. Build the solution (`Build > Build Solution`).
 
-## Running
-
-After building, the executable can be found in `Network Scanner/bin/<Configuration>/net9.0-windows/`.
-
-You can also run the application directly with the .NET CLI:
-
+### Run
 ```bash
- dotnet run --project "Network Scanner/Network Scanner.csproj"
+dotnet run --project "Network Scanner/Network Scanner.csproj"
 ```
+The executable also appears at `Network Scanner/bin/<Configuration>/net9.0-windows/` after a build.
 
-Select a network interface from the drop-down, verify the starting IP address, and click **Scan** to discover hosts on your network. The **Scan** button changes to **Cancel** while scanning so you can stop the operation early.
+## Using the App
+- Select a network interface to auto-fill the base IPv4 address.
+- Set **Start** and **End** host numbers to narrow the scan window.
+- Toggle **Resolve hosts** and adjust **Timeout (ms)** to balance speed vs accuracy.
+- Click **Start** to scan or **Cancel** to stop midway; watch progress and live stats update.
+- Export results to CSV once hosts are found.
 
-Use the **Start** and **End** host fields to narrow the scan range (default 1-254). After a scan, click **Export** to save the responsive hosts to a CSV file. Disable **Resolve hosts** or lower the **Timeout ms** setting to speed up scans when name lookups are slow.
+## Project Map
+- `Network Scanner.sln` — solution entry point
+- `Network Scanner/` — WinForms UI (`Form1.*`) and app entry (`Program.cs`)
+- `Network Scanner/bin/<Configuration>/net9.0-windows/` — build outputs
+
+## Notes for Reviewers
+- Manual test ideas: scan a small range (e.g., `192.168.1.1-20`), try canceling mid-run, toggle hostname resolution, and export results.
+
+## License
+MIT License. See `LICENSE` for details.

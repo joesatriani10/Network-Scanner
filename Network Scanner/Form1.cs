@@ -1,21 +1,25 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace Network_Scanner;
 
 public partial class Form1 : Form
 {
+    private const bool EnableResolutionLogging = true;
     private ConcurrentBag<(string IpAddress, string HostName, string PingReply, IPStatus Status, long RoundtripTime)> results;
     private CancellationTokenSource? _cts;
     private int _completed;
@@ -29,20 +33,17 @@ public partial class Form1 : Form
     {
         InitializeComponent();
 
-        // Initialize the concurrent bag to store results
+        // Store scan results for export and UI rendering
         results = new ConcurrentBag<(string, string, string, IPStatus, long)>();
 
-        // Initialize DataGridView columns
+        // Prepare the grid and populate interface choices
         InitializeDataGridView();
-
-        // Load available network interfaces
         LoadNetworkInterfaces();
 
-        // Configure TextBox input for IPv4 addresses
+        // Constrain IPv4 input for the base address selector
         textBox1.KeyPress += textBox1_KeyPress;
         textBox1.MaxLength = 15;
 
-        // Attach ComboBox selection event
         comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
 
         buttonExport.Enabled = false;
@@ -55,6 +56,7 @@ public partial class Form1 : Form
 
     private void InitializeDataGridView()
     {
+        // Style and size the grid so scan results are easy to scan
         dataGridView1.Columns.Clear();
         dataGridView1.BorderStyle = BorderStyle.None;
         dataGridView1.BackgroundColor = Color.White;
@@ -98,7 +100,7 @@ public partial class Form1 : Form
     {
         comboBox1.Items.Clear();
 
-        // Regular expression for valid interface names (Ethernet, Ethernet 2, Wi-Fi, Wi-Fi 2, WiFi, WiFi 2, etc.)
+        // Allow common wired and wireless adapter names while skipping virtuals
         var validPattern = new Regex(@"^(Ethernet|Wi-Fi|WiFi)( \d+)?$", RegexOptions.IgnoreCase);
 
         foreach (var netInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -132,6 +134,7 @@ public partial class Form1 : Form
 
     private void SetTextBoxIpAddress()
     {
+        // Prefill the base IPv4 using the selected adapter (ending in .1)
         if (comboBox1.SelectedItem != null)
         {
             string selectedInterface = comboBox1.SelectedItem.ToString();
@@ -151,6 +154,7 @@ public partial class Form1 : Form
 
     private bool TryGetBaseAddress(string input, out string baseIp, out string errorMessage)
     {
+        // Validate IPv4 input and return the /24 base prefix
         baseIp = "";
         errorMessage = "";
 
@@ -199,9 +203,9 @@ public partial class Form1 : Form
         return "";
     }
 
-    // Method to start scanning the network
     private async void button1_Click(object sender, EventArgs e)
     {
+        // Toggle between starting a scan and cancelling an in-flight scan
         if (_cts != null)
         {
             CancelScan();
@@ -400,6 +404,7 @@ public partial class Form1 : Form
 
     private async Task PingNetworkAsync(List<string> ipList, bool resolveHosts, int timeoutMs, CancellationToken token)
     {
+        // Fan out ping requests across the host range with controlled parallelism
         var options = new ParallelOptions
         {
             CancellationToken = token,
@@ -414,6 +419,7 @@ public partial class Form1 : Form
 
     private async Task PingAddressAsync(string ipString, bool resolveHosts, int timeoutMs, CancellationToken token)
     {
+        // Ping a single host and update UI-bound collections on success
         if (token.IsCancellationRequested)
             return;
         IPStatus status = IPStatus.Unknown;
@@ -430,19 +436,8 @@ public partial class Form1 : Form
             if (pingReply.Status == IPStatus.Success)
             {
                 this.Invoke((Action)(() => UpdateCurrentTarget(ipString)));
-                hostName = "Unknown";
-                if (resolveHosts)
-                {
-                    try
-                    {
-                        var host = await Dns.GetHostEntryAsync(ipString);
-                        hostName = host.HostName;
-                    }
-                    catch
-                    {
-                        // Ignore error in case cant resolve host
-                    }
-                }
+                var hostInfo = await ResolveHostNameAsync(ipString, resolveHosts, token);
+                hostName = hostInfo.Name;
 
                 var entry = (IpAddress: ipString,
                               HostName: hostName,
@@ -461,6 +456,10 @@ public partial class Form1 : Form
                     dataGridView1.Rows[rowIndex].Cells[4].Value = entry.RoundtripTime;
                     dataGridView1.Rows[rowIndex].DefaultCellStyle.BackColor = Color.FromArgb(230, 238, 255);
                     dataGridView1.Rows[rowIndex].DefaultCellStyle.SelectionBackColor = Color.FromArgb(206, 224, 255);
+                    if (EnableResolutionLogging && !string.Equals(hostInfo.Name, "Unknown", StringComparison.OrdinalIgnoreCase))
+                    {
+                        SetStatus($"Resolved {ipString} via {hostInfo.Source}: {hostInfo.Name}");
+                    }
                     UpdateStatsLabels();
                 }));
             }
@@ -504,10 +503,313 @@ public partial class Form1 : Form
 
     private void TrackLatency(long rtt)
     {
+        // Maintain running aggregates for average, min, and max latency labels
         Interlocked.Increment(ref _onlineCount);
         Interlocked.Add(ref _latencyTotal, rtt);
         UpdateMin(ref _latencyMin, rtt);
         UpdateMax(ref _latencyMax, rtt);
+    }
+
+    private async Task<(string Name, string Source)> ResolveHostNameAsync(string ipString, bool resolveHosts, CancellationToken token)
+    {
+        if (!resolveHosts)
+            return ("Unknown", "Disabled");
+
+        try
+        {
+            var host = await Dns.GetHostEntryAsync(ipString);
+            if (!string.IsNullOrWhiteSpace(host.HostName))
+            {
+                LogResolution(ipString, "DNS", host.HostName, success: true);
+                return (host.HostName, "DNS");
+            }
+        }
+        catch
+        {
+            LogResolution(ipString, "DNS", "No PTR or DNS error");
+        }
+
+        try
+        {
+            string? netBios = await ResolveNetBiosNameAsync(ipString, token);
+            if (!string.IsNullOrWhiteSpace(netBios))
+            {
+                LogResolution(ipString, "NetBIOS", netBios, success: true);
+                return (netBios, "NetBIOS");
+            }
+        }
+        catch
+        {
+            LogResolution(ipString, "NetBIOS", "Resolution blocked or failed");
+        }
+
+        try
+        {
+            string? multicast = await ResolveMulticastNameAsync(ipString, token);
+            if (!string.IsNullOrWhiteSpace(multicast))
+            {
+                LogResolution(ipString, "Multicast", multicast, success: true);
+                return (multicast, "Multicast");
+            }
+        }
+        catch
+        {
+            LogResolution(ipString, "Multicast", "Resolution blocked or failed");
+        }
+
+        LogResolution(ipString, "Resolution", "No name found across DNS/NetBIOS/Multicast");
+        return ("Unknown", "None");
+    }
+
+    private async Task<string?> ResolveNetBiosNameAsync(string ipString, CancellationToken token)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "nbtstat",
+                Arguments = $"-A {ipString}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+
+        if (!process.Start())
+            return null;
+
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var waitTask = process.WaitForExitAsync(token);
+        var completed = await Task.WhenAny(waitTask, Task.Delay(2000, token));
+
+        if (completed != waitTask)
+        {
+            try { process.Kill(); } catch { }
+            return null;
+        }
+
+        string output = await outputTask;
+        return ParseNetBiosName(output);
+    }
+
+    private async Task<string?> ResolveMulticastNameAsync(string ipString, CancellationToken token)
+    {
+        if (!System.Net.IPAddress.TryParse(ipString, out var address))
+            return null;
+
+        string reverse = string.Join(".", address.GetAddressBytes().Reverse()) + ".in-addr.arpa";
+
+        var targets = new List<(byte[] Query, IPEndPoint Endpoint)>
+        {
+            (BuildPtrQuery(reverse, requestUnicastResponse: false, zeroTransactionId: false),
+                new IPEndPoint(System.Net.IPAddress.Parse("224.0.0.252"), 5355)), // LLMNR
+            (BuildPtrQuery(reverse, requestUnicastResponse: true, zeroTransactionId: true),
+                new IPEndPoint(System.Net.IPAddress.Parse("224.0.0.251"), 5353))  // mDNS with QU flag
+        };
+
+        foreach (var target in targets)
+        {
+            string? name = await SendDnsQueryAsync(target.Query, target.Endpoint, token);
+            if (!string.IsNullOrWhiteSpace(name))
+                return name;
+        }
+
+        return null;
+    }
+
+    private async Task<string?> SendDnsQueryAsync(byte[] query, IPEndPoint endpoint, CancellationToken token)
+    {
+        using var client = new UdpClient(AddressFamily.InterNetwork);
+        client.Client.ReceiveTimeout = 1500;
+        try
+        {
+            await client.SendAsync(query, query.Length, endpoint);
+
+            var receiveTask = client.ReceiveAsync();
+            var completed = await Task.WhenAny(receiveTask, Task.Delay(1500, token));
+            if (completed != receiveTask)
+                return null;
+
+            var response = receiveTask.Result.Buffer;
+            string? name = ParsePtrAnswer(response);
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                LogResolution(endpoint.ToString(), "MulticastResponse", name, success: true);
+            }
+            return name;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static byte[] BuildPtrQuery(string reverseName, bool requestUnicastResponse, bool zeroTransactionId)
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+
+        ushort id = zeroTransactionId ? (ushort)0 : (ushort)RandomNumberGenerator.GetInt32(0, ushort.MaxValue + 1);
+        WriteUInt16(writer, id);
+        WriteUInt16(writer, 0); // flags
+        WriteUInt16(writer, 1); // questions
+        WriteUInt16(writer, 0); // answers
+        WriteUInt16(writer, 0); // authority
+        WriteUInt16(writer, 0); // additional
+
+        WriteName(writer, reverseName);
+        WriteUInt16(writer, 12); // PTR
+        ushort qclass = requestUnicastResponse ? (ushort)(0x8000 | 1) : (ushort)1;
+        WriteUInt16(writer, qclass);  // IN (+QU for mDNS)
+
+        return ms.ToArray();
+    }
+
+    private static string? ParsePtrAnswer(byte[] response)
+    {
+        if (response.Length < 12)
+            return null;
+
+        int qdCount = ReadUInt16(response, 4);
+        int anCount = ReadUInt16(response, 6);
+        int offset = 12;
+
+        for (int i = 0; i < qdCount; i++)
+        {
+            ReadName(response, ref offset);
+            offset += 4; // type + class
+        }
+
+        for (int i = 0; i < anCount; i++)
+        {
+            ReadName(response, ref offset);
+            if (offset + 10 > response.Length)
+                return null;
+
+            ushort type = ReadUInt16(response, offset);
+            offset += 2;
+            offset += 2; // class
+            offset += 4; // ttl
+            ushort rdLength = ReadUInt16(response, offset);
+            offset += 2;
+
+            if (offset + rdLength > response.Length)
+                return null;
+
+            if (type == 12) // PTR
+            {
+                int rdataOffset = offset;
+                string name = ReadName(response, ref rdataOffset);
+                return string.IsNullOrWhiteSpace(name) ? null : name;
+            }
+
+            offset += rdLength;
+        }
+
+        return null;
+    }
+
+    private static void WriteUInt16(BinaryWriter writer, ushort value)
+    {
+        writer.Write((byte)(value >> 8));
+        writer.Write((byte)(value & 0xFF));
+    }
+
+    private static void WriteName(BinaryWriter writer, string domain)
+    {
+        foreach (var label in domain.Split('.', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var bytes = Encoding.ASCII.GetBytes(label);
+            writer.Write((byte)bytes.Length);
+            writer.Write(bytes);
+        }
+        writer.Write((byte)0);
+    }
+
+    private static string ReadName(byte[] buffer, ref int offset)
+    {
+        var labels = new List<string>();
+        int pos = offset;
+        bool jumped = false;
+        int guard = 0;
+
+        while (pos < buffer.Length && guard++ < 128)
+        {
+            byte len = buffer[pos++];
+            if (len == 0)
+                break;
+
+            if ((len & 0xC0) == 0xC0)
+            {
+                if (pos >= buffer.Length)
+                    break;
+
+                int pointer = ((len & 0x3F) << 8) | buffer[pos++];
+                if (!jumped)
+                {
+                    offset = pos;
+                    jumped = true;
+                }
+                pos = pointer;
+                continue;
+            }
+
+            if (pos + len > buffer.Length)
+                break;
+
+            labels.Add(Encoding.ASCII.GetString(buffer, pos, len));
+            pos += len;
+        }
+
+        if (!jumped)
+            offset = pos;
+
+        return labels.Count == 0 ? "" : string.Join(".", labels);
+    }
+
+    private static ushort ReadUInt16(byte[] buffer, int offset)
+    {
+        if (offset + 1 >= buffer.Length)
+            return 0;
+        return (ushort)((buffer[offset] << 8) | buffer[offset + 1]);
+    }
+
+    private void LogResolution(string target, string source, string message, bool success = false)
+    {
+        if (!EnableResolutionLogging)
+            return;
+
+        string text = success ? $"[{source}] {target}: {message}" : $"[{source}] {target}: {message}";
+        Debug.WriteLine(text);
+    }
+
+    private static string? ParseNetBiosName(string output)
+    {
+        if (string.IsNullOrWhiteSpace(output))
+            return null;
+
+        foreach (var raw in output.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (!line.Contains("<") || !line.Contains(">"))
+                continue;
+
+            if (!line.Contains("UNIQUE", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            int tagIndex = line.IndexOf('<');
+            if (tagIndex <= 0)
+                continue;
+
+            string name = line[..tagIndex].Trim();
+            if (string.IsNullOrWhiteSpace(name) || name.StartsWith("__"))
+                continue;
+
+            return name;
+        }
+
+        return null;
     }
 
     private static void UpdateMin(ref long target, long candidate)
@@ -579,16 +881,15 @@ public partial class Form1 : Form
 
     private void labelStatus_Click(object sender, EventArgs e)
     {
-        throw new System.NotImplementedException();
     }
 
     private void labelStats_Click(object sender, EventArgs e)
     {
-        throw new System.NotImplementedException();
     }
 
     private void numericTimeout_ValueChanged(object sender, EventArgs e)
     {
-        throw new System.NotImplementedException();
+        int timeout = (int)numericTimeout.Value;
+        SetStatus($"Timeout set to {timeout} ms.");
     }
 }
